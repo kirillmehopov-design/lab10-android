@@ -1,45 +1,46 @@
-# Lab 10 + Lab 9 — simple defense answers (English and Russian)
+# Lab 11 Defense Notes (plus existing Lab 10)
 
-**Why Fake Store API?**
-- EN: The assignment requires live product data via an HTTP GET request. Before, Lab 9 used six hard-coded products.
-- RU: Преподаватель требует загрузку из интернета. В Lab 9 товары были записаны вручную.
+**Why call WidgetsFlutterBinding.ensureInitialized() before runApp?**
+It allows Flutter plugins to initialize before we access SharedPreferences.
+Then we await the saved theme before drawing the first screen, avoiding a
+white flash when Dark Mode was saved.
 
-**Why use `http.get()` and `async/await`?**
-- EN: GET requests data from the API. Await waits for a response without freezing the interface.
-- RU: GET загружает товары, await ждёт ответ, не замораживая интерфейс.
+**What is SharedPreferences?**
+Simple local key-value storage for small non-sensitive data, not a database
+or a secure password vault.
 
-**Why do you use `(price as num).toDouble()`?**
-- EN: An API may send an integer or floating-point price. This safely converts either numeric type to double.
-- RU: Цена может прийти как int или double, преобразование num обрабатывает оба случая.
+**Which keys are used?**
+`app_theme_dark_mode` -> bool,
+`user_display_name` -> String,
+`offline_notes_json` -> JSON String.
 
-**Why Loading, Success and Error?**
-- EN: Users need feedback while the request loads, when products arrive, and when the internet is unavailable.
-- RU: Пользователь видит загрузку, товары или ошибку.
+**Why use ?? false and ?? 'Guest User'?**
+If nothing has been saved, the app must start with safe default values.
 
-**Why timeout and try/catch?**
-- EN: The request stops waiting after 10 seconds, and exceptions become a user-friendly error screen.
-- RU: Не ждать бесконечно и показать понятную ошибку.
+**How do you save List<NoteItem>?**
+Convert each note with `toJson()`, then call `jsonEncode()` on the whole
+list, and store it via `prefs.setString(notesKey, jsonString)`.
 
-**Why Retry Connection?**
-- EN: It calls the same fetch function again without restarting the app.
-- RU: Повторяет запрос без перезапуска.
+**How do you restore notes?**
+Read the JSON String using `prefs.getString(notesKey)`, call
+`jsonDecode()`, then convert each object using `NoteItem.fromJson()`.
 
-**Why Hero?**
-- EN: The same tag connects the product thumbnail and the detail image for an animated transition.
-- RU: Одинаковый Hero tag позволяет анимировать изображение между экранами.
+**How do Add, Toggle and Delete work?**
+We change the in-memory list, notify listeners, and serialize the *entire*
+updated list to SharedPreferences. Notes appear newest-first.
 
-**Why PageView.builder?**
-- EN: It creates swipeable image pages with a page counter and animated indicator dots.
-- RU: Позволяет листать фото и видеть номер страницы и точки.
+**Why a serialized write queue?**
+Rapid changes must not allow an older JSON snapshot to be written after a
+newer snapshot and accidentally restore deleted notes.
 
-**Why are there 3 pages with one image?**
-- EN: Fake Store API supplies a single image URL, so the gallery offers original and zoomed views while meeting the 3-page UI requirement.
-- RU: API даёт одну фотографию, поэтому страницы показывают разные приближения.
+**What proves persistence?**
+On Android: add notes, enable Dark Mode, save username, force-stop/kill
+the app, then start it from the launcher. Hot Restart is NOT the same test.
 
-**Why keep CartProvider from Lab 9?**
-- EN: It is already designed to synchronize cart data across pages. I reused it, rather than make another local cart.
-- RU: Корзина остаётся общей на всех экранах, в том числе на странице товара.
+**SharedPreferences vs Keychain / Keystore?**
+SharedPreferences is for non-sensitive simple settings. Keychain/Keystore
+are protected OS facilities intended for secret keys and credentials.
 
-**Does the Deep Link open the app?**
-- EN: The lab requires a bottom sheet with a deep link and copy action. The URI is copyable; incoming link handling is not configured.
-- RU: Требуется показать и скопировать ссылку. Открытие приложения по ссылке отдельно не настроено.
+**Does this mean the entire store works offline?**
+No. LW11 notes/settings are local and work offline; product data in Lab 10
+still requires the network and has its own Retry screen.

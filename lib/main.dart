@@ -2,29 +2,51 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'providers/cart_provider.dart';
+import 'providers/notes_vault_provider.dart';
 import 'screens/catalog_screen.dart';
 
-void main() => runApp(const GlobalCartApp());
+Future<void> main() async {
+  // LW11: Load theme, profile and notes BEFORE rendering the first frame.
+  WidgetsFlutterBinding.ensureInitialized();
+  final vault = await NotesVaultProvider.load();
+  runApp(GlobalCartApp(vault: vault));
+}
 
-// Lab 9's shared cart still wraps MaterialApp, so the catalog,
-// detail page and cart always read the SAME CartProvider instance.
 class GlobalCartApp extends StatelessWidget {
-  const GlobalCartApp({super.key});
+  const GlobalCartApp({super.key, required this.vault});
+
+  final NotesVaultProvider vault;
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => CartProvider(),
-      child: MaterialApp(
-        title: 'Cloud Store + Global Cart',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF315BD8)),
-          scaffoldBackgroundColor: const Color(0xFFF7F9FC),
-          appBarTheme: const AppBarTheme(centerTitle: false),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<CartProvider>(create: (_) => CartProvider()),
+        ChangeNotifierProvider<NotesVaultProvider>.value(value: vault),
+      ],
+      child: Consumer<NotesVaultProvider>(
+        builder: (context, settings, _) => MaterialApp(
+          title: 'Cloud Store + Offline Vault',
+          debugShowCheckedModeBanner: false,
+          themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          theme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF315BD8),
+              brightness: Brightness.light,
+            ),
+            appBarTheme: const AppBarTheme(centerTitle: false),
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: const Color(0xFF315BD8),
+              brightness: Brightness.dark,
+            ),
+            appBarTheme: const AppBarTheme(centerTitle: false),
+          ),
+          home: const CatalogScreen(),
         ),
-        home: const CatalogScreen(),
       ),
     );
   }

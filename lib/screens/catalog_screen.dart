@@ -7,13 +7,10 @@ import '../widgets/connection_error_view.dart';
 import '../widgets/product_card.dart';
 import 'cart_screen.dart';
 import 'product_detail_screen.dart';
+import 'notes_vault_screen.dart';
 
-// Lab 9's catalog is now filled by a real HTTP GET instead of 6 hard-coded
-// products. It explicitly handles Loading, Success and Error states.
 class CatalogScreen extends StatefulWidget {
   const CatalogScreen({super.key, this.api});
-
-  // Allows tests to inject a fake HTTP client without an internet connection.
   final ProductApi? api;
 
   @override
@@ -125,6 +122,15 @@ class _CatalogScreenState extends State<CatalogScreen> {
       appBar: AppBar(
         title: const Text('Cloud Product Catalog'),
         actions: [
+          IconButton(
+            tooltip: 'Offline Notes & Settings',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => const NotesVaultScreen(),
+              ),
+            ),
+            icon: const Icon(Icons.note_alt_outlined),
+          ),
           IconButton(
             tooltip: 'Reload products',
             onPressed: () => _fetchProducts(),
